@@ -20,7 +20,7 @@ fn get_input(display_str: &str) -> String {
     std::io::stdout().flush();
     std::io::stdin().read_line(&mut inp_line);
 
-    return inp_line;
+    return inp_line.trim().to_string();
 }
 
 fn poll_for_keys(base_url: &String) -> (String, String) {
@@ -33,7 +33,10 @@ fn poll_for_keys(base_url: &String) -> (String, String) {
         print!("poll nmr {} for key \t", curr_itr);
         let response = reqwest::blocking::get(base_url).unwrap();
         match { response.status() } {
-            StatusCode::NOT_FOUND => { std::thread::sleep(std::time::Duration::from_millis(100)) }
+            StatusCode::NOT_FOUND => {
+                println!("Miss");
+                std::thread::sleep(std::time::Duration::from_millis(100))
+            }
             _ => {
                 println!("Hit!");
                 break Option::Some(response);
@@ -43,7 +46,6 @@ fn poll_for_keys(base_url: &String) -> (String, String) {
             break Option::None;
         }
         curr_itr += 1;
-        println!("Miss")
     };
 
     let response = opt_resp.unwrap();
