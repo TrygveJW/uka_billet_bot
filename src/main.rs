@@ -6,6 +6,7 @@ use reqwest::{StatusCode, Response};
 use std::process::exit;
 use std::time::SystemTime;
 use std::thread::Thread;
+use reqwest::header::HeaderMap;
 
 const samf_ticket_url: &'static str = "https://billettsalg.samfundet.no/pay";
 
@@ -93,11 +94,15 @@ fn abc() {
 
     form_vals.insert("wheelchair-total".to_string(), "0".to_string());
     form_vals.insert("ticket-type".to_string(), "on".to_string());
+    form_vals.insert("membercard".to_string(),"".to_string());
     form_vals.insert("email".to_string(), email);
     form_vals.insert("ccno".to_string(), card_nmr);
     form_vals.insert("exp_month".to_string(), exp_m);
     form_vals.insert("exp_year".to_string(), exp_y);
     form_vals.insert("cvc2".to_string(), cvc2);
+
+
+
 
     println!("\ncopy the target url in this one the target url shold look somthing like this");
     println!("https://www.uka.no/program/658-bli-stor-pa-some-mmaria-stavang/758");
@@ -128,13 +133,36 @@ fn abc() {
     let no_redirect_client = reqwest::blocking::ClientBuilder::new().redirect(Policy::none()).build().unwrap();
 
     println!("posting form to samf's shitty slow website");
-    let resp = no_redirect_client.post(samf_ticket_url).form(&form_vals).send().unwrap();
+
+    let mut spoof_headers = HeaderMap::new();
+    spoof_headers.insert("Origin", "https://www.uka.no".parse().unwrap());
+    spoof_headers.insert("Host", "billettsalg.samfundet.no".parse().unwrap());
+    spoof_headers.insert("Referer", "https://www.uka.no/".parse().unwrap());
+    spoof_headers.insert("Sec-GPC", "1".parse().unwrap());
+    spoof_headers.insert("Sec-Fetch-User", "?1".parse().unwrap());
+    spoof_headers.insert("Sec-Fetch-Dest", "document".parse().unwrap());
+    spoof_headers.insert("Sec-Fetch-Mode", "navigate".parse().unwrap());
+    spoof_headers.insert("Sec-Fetch-Site", "cross-site".parse().unwrap());
+    spoof_headers.insert("Content-Type", "application/x-www-form-urlencoded".parse().unwrap());
+    spoof_headers.insert("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0".parse().unwrap());
+    let resp = no_redirect_client
+        .post(samf_ticket_url)
+        .form(&form_vals)
+        .headers(spoof_headers)
+        .send()
+        .unwrap();
+
     match resp.status() {
         StatusCode::SEE_OTHER => {
             println!("Success maybe. this is the part i hav not tested so idk realy")
         }
         _ => {}
     }
+
+    // for (key,val) in form_vals.iter(){
+    //     println!("key <{}> val<{}>", key, val);
+    // }
+
 
     resp.headers().iter().for_each(|(name, value)| {
         // println!("{}-{}", name, value.to_str().unwrap());
@@ -143,4 +171,6 @@ fn abc() {
             open::that(value.to_str().unwrap());
         }
     });
+
+    // println!("resp {}", resp.text().unwrap());
 }
