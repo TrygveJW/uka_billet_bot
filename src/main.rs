@@ -28,7 +28,7 @@ fn poll_for_keys(base_url: &String) -> (String, String) {
     let mut member_key: Option<String> = Option::None;//"price_9302_count".to_string();
     let mut non_member_key: Option<String> = Option::None;//"price_9303_count".to_string();
 
-    let mut max_itr = 100;
+    let mut max_itr = 2000;
     let mut curr_itr = 0;
     let opt_resp: Option<reqwest::blocking::Response> = loop {
         print!("poll nmr {} for key \t", curr_itr);
